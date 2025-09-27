@@ -1,6 +1,6 @@
 --[[
-    Modern Roblox UI Library - FIXED VERSION
-    Proper class declaration order and syntax fixes
+    Modern Roblox UI Library - FIXED UIListLayout Issue
+    Fixed UIListLayout creation and access
 ]]
 
 -- Services
@@ -688,7 +688,7 @@ function Label:UpdateTheme()
     Component.UpdateTheme(self)
 end
 
--- Section Component
+-- Section Component - FIXED VERSION
 Section.__index = Section
 setmetatable(Section, {__index = Component})
 
@@ -757,22 +757,29 @@ function Section:CreateGUI()
         Parent = self.Container
     })
     
-    local elementLayout = Utility:CreateInstance("UIListLayout", {
+    -- Create and store the UIListLayout reference
+    self.ElementLayout = Utility:CreateInstance("UIListLayout", {
         SortOrder = Enum.SortOrder.LayoutOrder,
         Padding = UDim.new(0, 5),
         Parent = self.ElementContainer
     })
     
-    -- Update section size when elements change
-    Utility:Connect(elementLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+    -- Update section size when elements change - FIXED
+    Utility:Connect(self.ElementLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
         self:UpdateSize()
     end)
     
-    self:UpdateSize()
+    -- Initial size update
+    task.defer(function()
+        self:UpdateSize()
+    end)
 end
 
 function Section:UpdateSize()
-    local elementHeight = self.ElementContainer.UIListLayout.AbsoluteContentSize.Y
+    -- Safety check to ensure ElementLayout exists
+    if not self.ElementLayout or not self.ElementContainer then return end
+    
+    local elementHeight = self.ElementLayout.AbsoluteContentSize.Y
     local totalHeight = 35 + elementHeight + 15
     
     self.ElementContainer.Size = UDim2.new(1, 0, 0, elementHeight)
@@ -820,7 +827,7 @@ function Section:LoadConfigValues()
     end
 end
 
--- Tab Component
+-- Tab Component - FIXED VERSION
 Tab.__index = Tab
 setmetatable(Tab, {__index = Component})
 
@@ -891,7 +898,8 @@ function Tab:CreateGUI()
         Parent = self.Content
     })
     
-    local leftLayout = Utility:CreateInstance("UIListLayout", {
+    -- Store layout references - FIXED
+    self.LeftLayout = Utility:CreateInstance("UIListLayout", {
         SortOrder = Enum.SortOrder.LayoutOrder,
         Padding = UDim.new(0, 10),
         Parent = self.LeftColumn
@@ -910,19 +918,20 @@ function Tab:CreateGUI()
         Parent = self.Content
     })
     
-    local rightLayout = Utility:CreateInstance("UIListLayout", {
+    -- Store layout references - FIXED
+    self.RightLayout = Utility:CreateInstance("UIListLayout", {
         SortOrder = Enum.SortOrder.LayoutOrder,
         Padding = UDim.new(0, 10),
         Parent = self.RightColumn
     })
     
-    -- Update canvas size when layout changes
-    Utility:Connect(leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-        self.LeftColumn.CanvasSize = UDim2.new(0, 0, 0, leftLayout.AbsoluteContentSize.Y + 20)
+    -- Update canvas size when layout changes - FIXED
+    Utility:Connect(self.LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+        self.LeftColumn.CanvasSize = UDim2.new(0, 0, 0, self.LeftLayout.AbsoluteContentSize.Y + 20)
     end)
     
-    Utility:Connect(rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-        self.RightColumn.CanvasSize = UDim2.new(0, 0, 0, rightLayout.AbsoluteContentSize.Y + 20)
+    Utility:Connect(self.RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+        self.RightColumn.CanvasSize = UDim2.new(0, 0, 0, self.RightLayout.AbsoluteContentSize.Y + 20)
     end)
     
     -- Button click handler
@@ -967,7 +976,7 @@ function Tab:LoadConfigValues()
     end
 end
 
--- Window Component
+-- Window Component - FIXED VERSION
 Window.__index = Window
 setmetatable(Window, {__index = Component})
 
@@ -1109,7 +1118,8 @@ function Window:CreateGUI()
         Parent = self.TabContainer
     })
     
-    Utility:CreateInstance("UIListLayout", {
+    -- Store layout reference - FIXED
+    self.TabListLayout = Utility:CreateInstance("UIListLayout", {
         SortOrder = Enum.SortOrder.LayoutOrder,
         Padding = UDim.new(0, 2),
         Parent = self.TabList

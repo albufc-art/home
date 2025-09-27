@@ -1,7 +1,6 @@
-
 --[[
-    Modern Roblox UI Library - WORKING VERSION
-    Fixed version that actually displays and functions properly
+    Modern Roblox UI Library - FIXED VERSION
+    Proper class declaration order and syntax fixes
 ]]
 
 -- Services
@@ -247,9 +246,730 @@ function Component:UpdateTheme()
     end
 end
 
+-- Forward declare all component classes
+local Toggle = {}
+local Button = {}
+local Slider = {}
+local Label = {}
+local Section = {}
+local Tab = {}
+local Window = {}
+
+-- Toggle Component
+Toggle.__index = Toggle
+setmetatable(Toggle, {__index = Component})
+
+function Toggle:New(options, section)
+    local self = setmetatable(Component:New("Toggle"), Toggle)
+    
+    self.Name = options.Name or "Toggle"
+    self.Flag = options.Flag
+    self.Default = options.Default or false
+    self.Section = section
+    self.State = self.Default
+    
+    if self.Flag then
+        self.State = ConfigManager:GetFlag(self.Flag, self.Default)
+    end
+    
+    self:SetCallback("Callback", options.Callback)
+    self:CreateGUI()
+    self:SetState(self.State)
+    
+    return self
+end
+
+function Toggle:CreateGUI()
+    -- Main Container
+    self.Container = Utility:CreateInstance("Frame", {
+        Name = self.Name,
+        Size = UDim2.new(1, -20, 0, 35),
+        BackgroundColor3 = Library.Theme.Tertiary,
+        BorderSizePixel = 0,
+        Parent = self.Section.ElementContainer
+    })
+    
+    Utility:CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 6),
+        Parent = self.Container
+    })
+    
+    -- Toggle Button
+    self.Button = Utility:CreateInstance("TextButton", {
+        Name = "Button",
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Text = "",
+        Parent = self.Container
+    })
+    
+    -- Toggle Label
+    self.Label = Utility:CreateInstance("TextLabel", {
+        Name = "Label",
+        Size = UDim2.new(1, -50, 1, 0),
+        Position = UDim2.new(0, 15, 0, 0),
+        BackgroundTransparency = 1,
+        Text = self.Name,
+        TextColor3 = Library.Theme.TextPrimary,
+        TextSize = Library.Theme.FontSize,
+        Font = Library.Theme.Font,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = self.Container
+    })
+    
+    -- Toggle Switch
+    self.Switch = Utility:CreateInstance("Frame", {
+        Name = "Switch",
+        Size = UDim2.new(0, 40, 0, 20),
+        Position = UDim2.new(1, -50, 0, 7),
+        BackgroundColor3 = Library.Theme.Tertiary,
+        BorderSizePixel = 0,
+        Parent = self.Container
+    })
+    
+    Utility:CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 10),
+        Parent = self.Switch
+    })
+    
+    -- Toggle Knob
+    self.Knob = Utility:CreateInstance("Frame", {
+        Name = "Knob",
+        Size = UDim2.new(0, 16, 0, 16),
+        Position = UDim2.new(0, 2, 0, 2),
+        BackgroundColor3 = Library.Theme.TextSecondary,
+        BorderSizePixel = 0,
+        Parent = self.Switch
+    })
+    
+    Utility:CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = self.Knob
+    })
+    
+    -- Click handler
+    Utility:Connect(self.Button.MouseButton1Click, function()
+        self:SetState(not self.State)
+    end)
+end
+
+function Toggle:SetState(state)
+    self.State = state
+    
+    if self.Flag then
+        ConfigManager:SetFlag(self.Flag, state)
+    end
+    
+    -- Update visual state
+    if state then
+        self.Switch.BackgroundColor3 = Library.Theme.Accent
+        self.Knob.BackgroundColor3 = Library.Theme.TextPrimary
+        Utility:TweenObject(self.Knob, {Position = UDim2.new(0, 22, 0, 2)}, 0.2)
+    else
+        self.Switch.BackgroundColor3 = Library.Theme.Tertiary
+        self.Knob.BackgroundColor3 = Library.Theme.TextSecondary
+        Utility:TweenObject(self.Knob, {Position = UDim2.new(0, 2, 0, 2)}, 0.2)
+    end
+    
+    -- Invoke callback
+    self:InvokeCallback("Callback", state)
+end
+
+function Toggle:UpdateTheme()
+    if not self.Container then return end
+    
+    self.Container.BackgroundColor3 = Library.Theme.Tertiary
+    self.Label.TextColor3 = Library.Theme.TextPrimary
+    self:SetState(self.State)
+    
+    Component.UpdateTheme(self)
+end
+
+function Toggle:LoadConfigValue()
+    if self.Flag then
+        local value = ConfigManager:GetFlag(self.Flag, self.Default)
+        self:SetState(value)
+    end
+end
+
+-- Button Component
+Button.__index = Button
+setmetatable(Button, {__index = Component})
+
+function Button:New(options, section)
+    local self = setmetatable(Component:New("Button"), Button)
+    
+    self.Name = options.Name or "Button"
+    self.Section = section
+    
+    self:SetCallback("Callback", options.Callback)
+    self:CreateGUI()
+    
+    return self
+end
+
+function Button:CreateGUI()
+    -- Main Container
+    self.Container = Utility:CreateInstance("TextButton", {
+        Name = self.Name,
+        Size = UDim2.new(1, -20, 0, 35),
+        BackgroundColor3 = Library.Theme.Accent,
+        BorderSizePixel = 0,
+        Text = "",
+        Parent = self.Section.ElementContainer
+    })
+    
+    Utility:CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 6),
+        Parent = self.Container
+    })
+    
+    -- Button Label
+    self.Label = Utility:CreateInstance("TextLabel", {
+        Name = "Label",
+        Size = UDim2.new(1, -20, 1, 0),
+        Position = UDim2.new(0, 10, 0, 0),
+        BackgroundTransparency = 1,
+        Text = self.Name,
+        TextColor3 = Library.Theme.TextPrimary,
+        TextSize = Library.Theme.FontSize,
+        Font = Library.Theme.Font,
+        Parent = self.Container
+    })
+    
+    -- Hover effects
+    Utility:Connect(self.Container.MouseEnter, function()
+        Utility:TweenObject(self.Container, {BackgroundColor3 = Library.Theme.AccentHover}, 0.2)
+    end)
+    
+    Utility:Connect(self.Container.MouseLeave, function()
+        Utility:TweenObject(self.Container, {BackgroundColor3 = Library.Theme.Accent}, 0.2)
+    end)
+    
+    -- Click handler
+    Utility:Connect(self.Container.MouseButton1Click, function()
+        Utility:TweenObject(self.Container, {BackgroundColor3 = Library.Theme.AccentActive}, 0.1)
+        task.spawn(function()
+            task.wait(0.1)
+            Utility:TweenObject(self.Container, {BackgroundColor3 = Library.Theme.AccentHover}, 0.1)
+        end)
+        
+        self:InvokeCallback("Callback")
+    end)
+end
+
+function Button:UpdateTheme()
+    if not self.Container then return end
+    
+    self.Container.BackgroundColor3 = Library.Theme.Accent
+    self.Label.TextColor3 = Library.Theme.TextPrimary
+    
+    Component.UpdateTheme(self)
+end
+
+-- Slider Component
+Slider.__index = Slider
+setmetatable(Slider, {__index = Component})
+
+function Slider:New(options, section)
+    local self = setmetatable(Component:New("Slider"), Slider)
+    
+    self.Name = options.Name or "Slider"
+    self.Flag = options.Flag
+    self.Min = options.Min or 0
+    self.Max = options.Max or 100
+    self.Default = options.Default or self.Min
+    self.Decimals = options.Decimals or 0
+    self.Units = options.Units or ""
+    self.Section = section
+    self.Value = self.Default
+    
+    if self.Flag then
+        self.Value = ConfigManager:GetFlag(self.Flag, self.Default)
+    end
+    
+    self:SetCallback("Callback", options.Callback)
+    self:CreateGUI()
+    self:SetValue(self.Value)
+    
+    return self
+end
+
+function Slider:CreateGUI()
+    -- Main Container
+    self.Container = Utility:CreateInstance("Frame", {
+        Name = self.Name,
+        Size = UDim2.new(1, -20, 0, 50),
+        BackgroundColor3 = Library.Theme.Tertiary,
+        BorderSizePixel = 0,
+        Parent = self.Section.ElementContainer
+    })
+    
+    Utility:CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 6),
+        Parent = self.Container
+    })
+    
+    -- Slider Label
+    self.Label = Utility:CreateInstance("TextLabel", {
+        Name = "Label",
+        Size = UDim2.new(1, -80, 0, 20),
+        Position = UDim2.new(0, 15, 0, 5),
+        BackgroundTransparency = 1,
+        Text = self.Name,
+        TextColor3 = Library.Theme.TextPrimary,
+        TextSize = Library.Theme.FontSize,
+        Font = Library.Theme.Font,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = self.Container
+    })
+    
+    -- Value Label
+    self.ValueLabel = Utility:CreateInstance("TextLabel", {
+        Name = "Value",
+        Size = UDim2.new(0, 60, 0, 20),
+        Position = UDim2.new(1, -75, 0, 5),
+        BackgroundTransparency = 1,
+        Text = tostring(self.Value) .. self.Units,
+        TextColor3 = Library.Theme.TextSecondary,
+        TextSize = Library.Theme.FontSize,
+        Font = Library.Theme.Font,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        Parent = self.Container
+    })
+    
+    -- Slider Track
+    self.Track = Utility:CreateInstance("Frame", {
+        Name = "Track",
+        Size = UDim2.new(1, -30, 0, 6),
+        Position = UDim2.new(0, 15, 0, 32),
+        BackgroundColor3 = Library.Theme.Primary,
+        BorderSizePixel = 0,
+        Parent = self.Container
+    })
+    
+    Utility:CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 3),
+        Parent = self.Track
+    })
+    
+    -- Slider Fill
+    self.Fill = Utility:CreateInstance("Frame", {
+        Name = "Fill",
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = Library.Theme.Accent,
+        BorderSizePixel = 0,
+        Parent = self.Track
+    })
+    
+    Utility:CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 3),
+        Parent = self.Fill
+    })
+    
+    -- Input handling
+    local dragging = false
+    
+    Utility:Connect(self.Track.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            self:UpdateFromInput(input.Position.X)
+        end
+    end)
+    
+    Utility:Connect(UserInputService.InputChanged, function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            self:UpdateFromInput(input.Position.X)
+        end
+    end)
+    
+    Utility:Connect(UserInputService.InputEnded, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+end
+
+function Slider:UpdateFromInput(inputX)
+    local trackX = self.Track.AbsolutePosition.X
+    local trackWidth = self.Track.AbsoluteSize.X
+    local relativeX = math.clamp(inputX - trackX, 0, trackWidth)
+    local percentage = relativeX / trackWidth
+    
+    local newValue = self.Min + (self.Max - self.Min) * percentage
+    newValue = Utility:Round(newValue, self.Decimals)
+    
+    self:SetValue(newValue)
+end
+
+function Slider:SetValue(value)
+    self.Value = math.clamp(value, self.Min, self.Max)
+    
+    if self.Flag then
+        ConfigManager:SetFlag(self.Flag, self.Value)
+    end
+    
+    -- Update visual
+    local percentage = (self.Value - self.Min) / (self.Max - self.Min)
+    self.Fill.Size = UDim2.new(percentage, 0, 1, 0)
+    self.ValueLabel.Text = tostring(self.Value) .. self.Units
+    
+    -- Invoke callback
+    self:InvokeCallback("Callback", self.Value)
+end
+
+function Slider:UpdateTheme()
+    if not self.Container then return end
+    
+    self.Container.BackgroundColor3 = Library.Theme.Tertiary
+    self.Label.TextColor3 = Library.Theme.TextPrimary
+    self.ValueLabel.TextColor3 = Library.Theme.TextSecondary
+    self.Track.BackgroundColor3 = Library.Theme.Primary
+    self.Fill.BackgroundColor3 = Library.Theme.Accent
+    
+    Component.UpdateTheme(self)
+end
+
+function Slider:LoadConfigValue()
+    if self.Flag then
+        local value = ConfigManager:GetFlag(self.Flag, self.Default)
+        self:SetValue(value)
+    end
+end
+
+-- Label Component
+Label.__index = Label
+setmetatable(Label, {__index = Component})
+
+function Label:New(options, section)
+    local self = setmetatable(Component:New("Label"), Label)
+    
+    self.Name = options.Name or ""
+    self.Text = options.Text or options.Name or "Label"
+    self.Section = section
+    
+    self:CreateGUI()
+    
+    return self
+end
+
+function Label:CreateGUI()
+    -- Main Container
+    self.Container = Utility:CreateInstance("Frame", {
+        Name = self.Name,
+        Size = UDim2.new(1, -20, 0, 30),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Parent = self.Section.ElementContainer
+    })
+    
+    -- Label
+    self.Label = Utility:CreateInstance("TextLabel", {
+        Name = "Label",
+        Size = UDim2.new(1, -20, 1, 0),
+        Position = UDim2.new(0, 10, 0, 0),
+        BackgroundTransparency = 1,
+        Text = self.Text,
+        TextColor3 = Library.Theme.TextSecondary,
+        TextSize = Library.Theme.FontSize,
+        Font = Library.Theme.Font,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextWrapped = true,
+        Parent = self.Container
+    })
+end
+
+function Label:UpdateTheme()
+    if not self.Container then return end
+    
+    self.Label.TextColor3 = Library.Theme.TextSecondary
+    
+    Component.UpdateTheme(self)
+end
+
+-- Section Component
+Section.__index = Section
+setmetatable(Section, {__index = Component})
+
+function Section:New(options, tab)
+    local self = setmetatable(Component:New("Section"), Section)
+    
+    self.Name = options.Name or "Section"
+    self.Side = options.Side or "Left"
+    self.Tab = tab
+    self.Elements = {}
+    self.Collapsed = false
+    
+    self:CreateGUI()
+    
+    return self
+end
+
+function Section:CreateGUI()
+    local parent = self.Tab:GetColumn(self.Side)
+    
+    -- Section Container
+    self.Container = Utility:CreateInstance("Frame", {
+        Name = self.Name,
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundColor3 = Library.Theme.Secondary,
+        BorderSizePixel = 0,
+        Parent = parent
+    })
+    
+    Utility:CreateInstance("UICorner", {
+        CornerRadius = Library.Theme.CornerRadius,
+        Parent = self.Container
+    })
+    
+    -- Section Header
+    self.Header = Utility:CreateInstance("TextButton", {
+        Name = "Header",
+        Size = UDim2.new(1, 0, 0, 35),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Text = "",
+        Parent = self.Container
+    })
+    
+    -- Section Title
+    self.TitleLabel = Utility:CreateInstance("TextLabel", {
+        Name = "Title",
+        Size = UDim2.new(1, -30, 1, 0),
+        Position = UDim2.new(0, 15, 0, 0),
+        BackgroundTransparency = 1,
+        Text = self.Name,
+        TextColor3 = Library.Theme.TextPrimary,
+        TextSize = Library.Theme.FontSize,
+        Font = Library.Theme.Font,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = self.Header
+    })
+    
+    -- Element Container
+    self.ElementContainer = Utility:CreateInstance("Frame", {
+        Name = "Elements",
+        Size = UDim2.new(1, 0, 0, 0),
+        Position = UDim2.new(0, 0, 0, 35),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Parent = self.Container
+    })
+    
+    local elementLayout = Utility:CreateInstance("UIListLayout", {
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 5),
+        Parent = self.ElementContainer
+    })
+    
+    -- Update section size when elements change
+    Utility:Connect(elementLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+        self:UpdateSize()
+    end)
+    
+    self:UpdateSize()
+end
+
+function Section:UpdateSize()
+    local elementHeight = self.ElementContainer.UIListLayout.AbsoluteContentSize.Y
+    local totalHeight = 35 + elementHeight + 15
+    
+    self.ElementContainer.Size = UDim2.new(1, 0, 0, elementHeight)
+    self.Container.Size = UDim2.new(1, 0, 0, totalHeight)
+end
+
+function Section:AddToggle(options)
+    local toggle = Toggle:New(options, self)
+    table.insert(self.Elements, toggle)
+    return toggle
+end
+
+function Section:AddButton(options)
+    local button = Button:New(options, self)
+    table.insert(self.Elements, button)
+    return button
+end
+
+function Section:AddSlider(options)
+    local slider = Slider:New(options, self)
+    table.insert(self.Elements, slider)
+    return slider
+end
+
+function Section:AddLabel(options)
+    local label = Label:New(options, self)
+    table.insert(self.Elements, label)
+    return label
+end
+
+function Section:UpdateTheme()
+    if not self.Container then return end
+    
+    self.Container.BackgroundColor3 = Library.Theme.Secondary
+    self.TitleLabel.TextColor3 = Library.Theme.TextPrimary
+    
+    Component.UpdateTheme(self)
+end
+
+function Section:LoadConfigValues()
+    for _, element in ipairs(self.Elements) do
+        if element.LoadConfigValue then
+            element:LoadConfigValue()
+        end
+    end
+end
+
+-- Tab Component
+Tab.__index = Tab
+setmetatable(Tab, {__index = Component})
+
+function Tab:New(options, window)
+    local self = setmetatable(Component:New("Tab"), Tab)
+    
+    self.Name = options.Name or "Tab"
+    self.Icon = options.Icon
+    self.Window = window
+    self.Sections = {}
+    self.Active = false
+    
+    self:CreateGUI()
+    
+    return self
+end
+
+function Tab:CreateGUI()
+    -- Tab Button
+    self.Button = Utility:CreateInstance("TextButton", {
+        Name = self.Name,
+        Size = UDim2.new(1, -10, 0, 35),
+        BackgroundColor3 = Library.Theme.Tertiary,
+        BorderSizePixel = 0,
+        Text = "",
+        Parent = self.Window.TabList
+    })
+    
+    Utility:CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 6),
+        Parent = self.Button
+    })
+    
+    -- Tab Label
+    self.Label = Utility:CreateInstance("TextLabel", {
+        Name = "Label",
+        Size = UDim2.new(1, -20, 1, 0),
+        Position = UDim2.new(0, 10, 0, 0),
+        BackgroundTransparency = 1,
+        Text = self.Name,
+        TextColor3 = Library.Theme.TextSecondary,
+        TextSize = Library.Theme.FontSize,
+        Font = Library.Theme.Font,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = self.Button
+    })
+    
+    -- Tab Content
+    self.Content = Utility:CreateInstance("Frame", {
+        Name = self.Name .. "Content",
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Visible = false,
+        Parent = self.Window.ContentContainer
+    })
+    
+    -- Left Column
+    self.LeftColumn = Utility:CreateInstance("ScrollingFrame", {
+        Name = "LeftColumn",
+        Size = UDim2.new(0.5, -10, 1, -20),
+        Position = UDim2.new(0, 10, 0, 10),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ScrollBarThickness = 4,
+        ScrollBarImageColor3 = Library.Theme.Accent,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        Parent = self.Content
+    })
+    
+    local leftLayout = Utility:CreateInstance("UIListLayout", {
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 10),
+        Parent = self.LeftColumn
+    })
+    
+    -- Right Column
+    self.RightColumn = Utility:CreateInstance("ScrollingFrame", {
+        Name = "RightColumn",
+        Size = UDim2.new(0.5, -10, 1, -20),
+        Position = UDim2.new(0.5, 0, 0, 10),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ScrollBarThickness = 4,
+        ScrollBarImageColor3 = Library.Theme.Accent,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        Parent = self.Content
+    })
+    
+    local rightLayout = Utility:CreateInstance("UIListLayout", {
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 10),
+        Parent = self.RightColumn
+    })
+    
+    -- Update canvas size when layout changes
+    Utility:Connect(leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+        self.LeftColumn.CanvasSize = UDim2.new(0, 0, 0, leftLayout.AbsoluteContentSize.Y + 20)
+    end)
+    
+    Utility:Connect(rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+        self.RightColumn.CanvasSize = UDim2.new(0, 0, 0, rightLayout.AbsoluteContentSize.Y + 20)
+    end)
+    
+    -- Button click handler
+    Utility:Connect(self.Button.MouseButton1Click, function()
+        self.Window:SelectTab(self)
+    end)
+end
+
+function Tab:SetActive(active)
+    self.Active = active
+    self.Content.Visible = active
+    
+    if active then
+        self.Button.BackgroundColor3 = Library.Theme.Accent
+        self.Label.TextColor3 = Library.Theme.TextPrimary
+    else
+        self.Button.BackgroundColor3 = Library.Theme.Tertiary
+        self.Label.TextColor3 = Library.Theme.TextSecondary
+    end
+end
+
+function Tab:AddSection(options)
+    local section = Section:New(options, self)
+    table.insert(self.Sections, section)
+    return section
+end
+
+function Tab:GetColumn(side)
+    return side == "Right" and self.RightColumn or self.LeftColumn
+end
+
+function Tab:UpdateTheme()
+    self:SetActive(self.Active)
+    Component.UpdateTheme(self)
+end
+
+function Tab:LoadConfigValues()
+    for _, section in ipairs(self.Sections) do
+        if section.LoadConfigValues then
+            section:LoadConfigValues()
+        end
+    end
+end
+
 -- Window Component
-local Window = setmetatable({}, {__index = Component})
 Window.__index = Window
+setmetatable(Window, {__index = Component})
 
 function Window:New(options)
     local self = setmetatable(Component:New("Window"), Window)
@@ -543,718 +1263,6 @@ function Window:LoadConfigValues()
             tab:LoadConfigValues()
         end
     end
-end
-
--- Tab Component
-local Tab = setmetatable({}, {__index = Component})
-Tab.__index = Tab
-
-function Tab:New(options, window)
-    local self = setmetatable(Component:New("Tab"), Tab)
-    
-    self.Name = options.Name or "Tab"
-    self.Icon = options.Icon
-    self.Window = window
-    self.Sections = {}
-    self.Active = false
-    
-    self:CreateGUI()
-    
-    return self
-end
-
-function Tab:CreateGUI()
-    -- Tab Button
-    self.Button = Utility:CreateInstance("TextButton", {
-        Name = self.Name,
-        Size = UDim2.new(1, -10, 0, 35),
-        BackgroundColor3 = Library.Theme.Tertiary,
-        BorderSizePixel = 0,
-        Text = "",
-        Parent = self.Window.TabList
-    })
-    
-    Utility:CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 6),
-        Parent = self.Button
-    })
-    
-    -- Tab Label
-    self.Label = Utility:CreateInstance("TextLabel", {
-        Name = "Label",
-        Size = UDim2.new(1, -20, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = self.Name,
-        TextColor3 = Library.Theme.TextSecondary,
-        TextSize = Library.Theme.FontSize,
-        Font = Library.Theme.Font,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = self.Button
-    })
-    
-    -- Tab Content
-    self.Content = Utility:CreateInstance("Frame", {
-        Name = self.Name .. "Content",
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Visible = false,
-        Parent = self.Window.ContentContainer
-    })
-    
-    -- Left Column
-    self.LeftColumn = Utility:CreateInstance("ScrollingFrame", {
-        Name = "LeftColumn",
-        Size = UDim2.new(0.5, -10, 1, -20),
-        Position = UDim2.new(0, 10, 0, 10),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ScrollBarThickness = 4,
-        ScrollBarImageColor3 = Library.Theme.Accent,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        Parent = self.Content
-    })
-    
-    local leftLayout = Utility:CreateInstance("UIListLayout", {
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = UDim.new(0, 10),
-        Parent = self.LeftColumn
-    })
-    
-    -- Right Column
-    self.RightColumn = Utility:CreateInstance("ScrollingFrame", {
-        Name = "RightColumn",
-        Size = UDim2.new(0.5, -10, 1, -20),
-        Position = UDim2.new(0.5, 0, 0, 10),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ScrollBarThickness = 4,
-        ScrollBarImageColor3 = Library.Theme.Accent,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        Parent = self.Content
-    })
-    
-    local rightLayout = Utility:CreateInstance("UIListLayout", {
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = UDim.new(0, 10),
-        Parent = self.RightColumn
-    })
-    
-    -- Update canvas size when layout changes
-    Utility:Connect(leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-        self.LeftColumn.CanvasSize = UDim2.new(0, 0, 0, leftLayout.AbsoluteContentSize.Y + 20)
-    end)
-    
-    Utility:Connect(rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-        self.RightColumn.CanvasSize = UDim2.new(0, 0, 0, rightLayout.AbsoluteContentSize.Y + 20)
-    end)
-    
-    -- Button click handler
-    Utility:Connect(self.Button.MouseButton1Click, function()
-        self.Window:SelectTab(self)
-    end)
-end
-
-function Tab:SetActive(active)
-    self.Active = active
-    self.Content.Visible = active
-    
-    if active then
-        self.Button.BackgroundColor3 = Library.Theme.Accent
-        self.Label.TextColor3 = Library.Theme.TextPrimary
-    else
-        self.Button.BackgroundColor3 = Library.Theme.Tertiary
-        self.Label.TextColor3 = Library.Theme.TextSecondary
-    end
-end
-
-function Tab:AddSection(options)
-    local section = Section:New(options, self)
-    table.insert(self.Sections, section)
-    return section
-end
-
-function Tab:GetColumn(side)
-    return side == "Right" and self.RightColumn or self.LeftColumn
-end
-
-function Tab:UpdateTheme()
-    self:SetActive(self.Active)
-    Component.UpdateTheme(self)
-end
-
-function Tab:LoadConfigValues()
-    for _, section in ipairs(self.Sections) do
-        if section.LoadConfigValues then
-            section:LoadConfigValues()
-        end
-    end
-end
-
--- Section Component
-local Section = setmetatable({}, {__index = Component})
-Section.__index = Section
-
-function Section:New(options, tab)
-    local self = setmetatable(Component:New("Section"), Section)
-    
-    self.Name = options.Name or "Section"
-    self.Side = options.Side or "Left"
-    self.Tab = tab
-    self.Elements = {}
-    self.Collapsed = false
-    
-    self:CreateGUI()
-    
-    return self
-end
-
-function Section:CreateGUI()
-    local parent = self.Tab:GetColumn(self.Side)
-    
-    -- Section Container
-    self.Container = Utility:CreateInstance("Frame", {
-        Name = self.Name,
-        Size = UDim2.new(1, 0, 0, 50),
-        BackgroundColor3 = Library.Theme.Secondary,
-        BorderSizePixel = 0,
-        Parent = parent
-    })
-    
-    Utility:CreateInstance("UICorner", {
-        CornerRadius = Library.Theme.CornerRadius,
-        Parent = self.Container
-    })
-    
-    -- Section Header
-    self.Header = Utility:CreateInstance("TextButton", {
-        Name = "Header",
-        Size = UDim2.new(1, 0, 0, 35),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Text = "",
-        Parent = self.Container
-    })
-    
-    -- Section Title
-    self.TitleLabel = Utility:CreateInstance("TextLabel", {
-        Name = "Title",
-        Size = UDim2.new(1, -30, 1, 0),
-        Position = UDim2.new(0, 15, 0, 0),
-        BackgroundTransparency = 1,
-        Text = self.Name,
-        TextColor3 = Library.Theme.TextPrimary,
-        TextSize = Library.Theme.FontSize,
-        Font = Library.Theme.Font,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = self.Header
-    })
-    
-    -- Element Container
-    self.ElementContainer = Utility:CreateInstance("Frame", {
-        Name = "Elements",
-        Size = UDim2.new(1, 0, 0, 0),
-        Position = UDim2.new(0, 0, 0, 35),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Parent = self.Container
-    })
-    
-    local elementLayout = Utility:CreateInstance("UIListLayout", {
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = UDim.new(0, 5),
-        Parent = self.ElementContainer
-    })
-    
-    -- Update section size when elements change
-    Utility:Connect(elementLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-        self:UpdateSize()
-    end)
-    
-    self:UpdateSize()
-end
-
-function Section:UpdateSize()
-    local elementHeight = self.ElementContainer.UIListLayout.AbsoluteContentSize.Y
-    local totalHeight = 35 + elementHeight + 15
-    
-    self.ElementContainer.Size = UDim2.new(1, 0, 0, elementHeight)
-    self.Container.Size = UDim2.new(1, 0, 0, totalHeight)
-end
-
-function Section:AddToggle(options)
-    local toggle = Toggle:New(options, self)
-    table.insert(self.Elements, toggle)
-    return toggle
-end
-
-function Section:AddButton(options)
-    local button = Button:New(options, self)
-    table.insert(self.Elements, button)
-    return button
-end
-
-function Section:AddSlider(options)
-    local slider = Slider:New(options, self)
-    table.insert(self.Elements, slider)
-    return slider
-end
-
-function Section:AddLabel(options)
-    local label = Label:New(options, self)
-    table.insert(self.Elements, label)
-    return label
-end
-
-function Section:UpdateTheme()
-    if not self.Container then return end
-    
-    self.Container.BackgroundColor3 = Library.Theme.Secondary
-    self.TitleLabel.TextColor3 = Library.Theme.TextPrimary
-    
-    Component.UpdateTheme(self)
-end
-
-function Section:LoadConfigValues()
-    for _, element in ipairs(self.Elements) do
-        if element.LoadConfigValue then
-            element:LoadConfigValue()
-        end
-    end
-end
-
--- Toggle Component
-local Toggle = setmetatable({}, {__index = Component})
-Toggle.__index = Toggle
-
-function Toggle:New(options, section)
-    local self = setmetatable(Component:New("Toggle"), Toggle)
-    
-    self.Name = options.Name or "Toggle"
-    self.Flag = options.Flag
-    self.Default = options.Default or false
-    self.Section = section
-    self.State = self.Default
-    
-    if self.Flag then
-        self.State = ConfigManager:GetFlag(self.Flag, self.Default)
-    end
-    
-    self:SetCallback("Callback", options.Callback)
-    self:CreateGUI()
-    self:SetState(self.State)
-    
-    return self
-end
-
-function Toggle:CreateGUI()
-    -- Main Container
-    self.Container = Utility:CreateInstance("Frame", {
-        Name = self.Name,
-        Size = UDim2.new(1, -20, 0, 35),
-        BackgroundColor3 = Library.Theme.Tertiary,
-        BorderSizePixel = 0,
-        Parent = self.Section.ElementContainer
-    })
-    
-    Utility:CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 6),
-        Parent = self.Container
-    })
-    
-    -- Toggle Button
-    self.Button = Utility:CreateInstance("TextButton", {
-        Name = "Button",
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Text = "",
-        Parent = self.Container
-    })
-    
-    -- Toggle Label
-    self.Label = Utility:CreateInstance("TextLabel", {
-        Name = "Label",
-        Size = UDim2.new(1, -50, 1, 0),
-        Position = UDim2.new(0, 15, 0, 0),
-        BackgroundTransparency = 1,
-        Text = self.Name,
-        TextColor3 = Library.Theme.TextPrimary,
-        TextSize = Library.Theme.FontSize,
-        Font = Library.Theme.Font,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = self.Container
-    })
-    
-    -- Toggle Switch
-    self.Switch = Utility:CreateInstance("Frame", {
-        Name = "Switch",
-        Size = UDim2.new(0, 40, 0, 20),
-        Position = UDim2.new(1, -50, 0, 7),
-        BackgroundColor3 = Library.Theme.Tertiary,
-        BorderSizePixel = 0,
-        Parent = self.Container
-    })
-    
-    Utility:CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 10),
-        Parent = self.Switch
-    })
-    
-    -- Toggle Knob
-    self.Knob = Utility:CreateInstance("Frame", {
-        Name = "Knob",
-        Size = UDim2.new(0, 16, 0, 16),
-        Position = UDim2.new(0, 2, 0, 2),
-        BackgroundColor3 = Library.Theme.TextSecondary,
-        BorderSizePixel = 0,
-        Parent = self.Switch
-    })
-    
-    Utility:CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = self.Knob
-    })
-    
-    -- Click handler
-    Utility:Connect(self.Button.MouseButton1Click, function()
-        self:SetState(not self.State)
-    end)
-end
-
-function Toggle:SetState(state)
-    self.State = state
-    
-    if self.Flag then
-        ConfigManager:SetFlag(self.Flag, state)
-    end
-    
-    -- Update visual state
-    if state then
-        self.Switch.BackgroundColor3 = Library.Theme.Accent
-        self.Knob.BackgroundColor3 = Library.Theme.TextPrimary
-        Utility:TweenObject(self.Knob, {Position = UDim2.new(0, 22, 0, 2)}, 0.2)
-    else
-        self.Switch.BackgroundColor3 = Library.Theme.Tertiary
-        self.Knob.BackgroundColor3 = Library.Theme.TextSecondary
-        Utility:TweenObject(self.Knob, {Position = UDim2.new(0, 2, 0, 2)}, 0.2)
-    end
-    
-    -- Invoke callback
-    self:InvokeCallback("Callback", state)
-end
-
-function Toggle:UpdateTheme()
-    if not self.Container then return end
-    
-    self.Container.BackgroundColor3 = Library.Theme.Tertiary
-    self.Label.TextColor3 = Library.Theme.TextPrimary
-    self:SetState(self.State)
-    
-    Component.UpdateTheme(self)
-end
-
-function Toggle:LoadConfigValue()
-    if self.Flag then
-        local value = ConfigManager:GetFlag(self.Flag, self.Default)
-        self:SetState(value)
-    end
-end
-
--- Button Component
-local Button = setmetatable({}, {__index = Component})
-Button.__index = Button
-
-function Button:New(options, section)
-    local self = setmetatable(Component:New("Button"), Button)
-    
-    self.Name = options.Name or "Button"
-    self.Section = section
-    
-    self:SetCallback("Callback", options.Callback)
-    self:CreateGUI()
-    
-    return self
-end
-
-function Button:CreateGUI()
-    -- Main Container
-    self.Container = Utility:CreateInstance("TextButton", {
-        Name = self.Name,
-        Size = UDim2.new(1, -20, 0, 35),
-        BackgroundColor3 = Library.Theme.Accent,
-        BorderSizePixel = 0,
-        Text = "",
-        Parent = self.Section.ElementContainer
-    })
-    
-    Utility:CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 6),
-        Parent = self.Container
-    })
-    
-    -- Button Label
-    self.Label = Utility:CreateInstance("TextLabel", {
-        Name = "Label",
-        Size = UDim2.new(1, -20, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = self.Name,
-        TextColor3 = Library.Theme.TextPrimary,
-        TextSize = Library.Theme.FontSize,
-        Font = Library.Theme.Font,
-        Parent = self.Container
-    })
-    
-    -- Hover effects
-    Utility:Connect(self.Container.MouseEnter, function()
-        Utility:TweenObject(self.Container, {BackgroundColor3 = Library.Theme.AccentHover}, 0.2)
-    end)
-    
-    Utility:Connect(self.Container.MouseLeave, function()
-        Utility:TweenObject(self.Container, {BackgroundColor3 = Library.Theme.Accent}, 0.2)
-    end)
-    
-    -- Click handler
-    Utility:Connect(self.Container.MouseButton1Click, function()
-        Utility:TweenObject(self.Container, {BackgroundColor3 = Library.Theme.AccentActive}, 0.1)
-        task.spawn(function()
-            task.wait(0.1)
-            Utility:TweenObject(self.Container, {BackgroundColor3 = Library.Theme.AccentHover}, 0.1)
-        end)
-        
-        self:InvokeCallback("Callback")
-    end)
-end
-
-function Button:UpdateTheme()
-    if not self.Container then return end
-    
-    self.Container.BackgroundColor3 = Library.Theme.Accent
-    self.Label.TextColor3 = Library.Theme.TextPrimary
-    
-    Component.UpdateTheme(self)
-end
-
--- Slider Component
-local Slider = setmetatable({}, {__index = Component})
-Slider.__index = Slider
-
-function Slider:New(options, section)
-    local self = setmetatable(Component:New("Slider"), Slider)
-    
-    self.Name = options.Name or "Slider"
-    self.Flag = options.Flag
-    self.Min = options.Min or 0
-    self.Max = options.Max or 100
-    self.Default = options.Default or self.Min
-    self.Decimals = options.Decimals or 0
-    self.Units = options.Units or ""
-    self.Section = section
-    self.Value = self.Default
-    
-    if self.Flag then
-        self.Value = ConfigManager:GetFlag(self.Flag, self.Default)
-    end
-    
-    self:SetCallback("Callback", options.Callback)
-    self:CreateGUI()
-    self:SetValue(self.Value)
-    
-    return self
-end
-
-function Slider:CreateGUI()
-    -- Main Container
-    self.Container = Utility:CreateInstance("Frame", {
-        Name = self.Name,
-        Size = UDim2.new(1, -20, 0, 50),
-        BackgroundColor3 = Library.Theme.Tertiary,
-        BorderSizePixel = 0,
-        Parent = self.Section.ElementContainer
-    })
-    
-    Utility:CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 6),
-        Parent = self.Container
-    })
-    
-    -- Slider Label
-    self.Label = Utility:CreateInstance("TextLabel", {
-        Name = "Label",
-        Size = UDim2.new(1, -80, 0, 20),
-        Position = UDim2.new(0, 15, 0, 5),
-        BackgroundTransparency = 1,
-        Text = self.Name,
-        TextColor3 = Library.Theme.TextPrimary,
-        TextSize = Library.Theme.FontSize,
-        Font = Library.Theme.Font,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = self.Container
-    })
-    
-    -- Value Label
-    self.ValueLabel = Utility:CreateInstance("TextLabel", {
-        Name = "Value",
-        Size = UDim2.new(0, 60, 0, 20),
-        Position = UDim2.new(1, -75, 0, 5),
-        BackgroundTransparency = 1,
-        Text = tostring(self.Value) .. self.Units,
-        TextColor3 = Library.Theme.TextSecondary,
-        TextSize = Library.Theme.FontSize,
-        Font = Library.Theme.Font,
-        TextXAlignment = Enum.TextXAlignment.Right,
-        Parent = self.Container
-    })
-    
-    -- Slider Track
-    self.Track = Utility:CreateInstance("Frame", {
-        Name = "Track",
-        Size = UDim2.new(1, -30, 0, 6),
-        Position = UDim2.new(0, 15, 0, 32),
-        BackgroundColor3 = Library.Theme.Primary,
-        BorderSizePixel = 0,
-        Parent = self.Container
-    })
-    
-    Utility:CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 3),
-        Parent = self.Track
-    })
-    
-    -- Slider Fill
-    self.Fill = Utility:CreateInstance("Frame", {
-        Name = "Fill",
-        Size = UDim2.new(0, 0, 1, 0),
-        BackgroundColor3 = Library.Theme.Accent,
-        BorderSizePixel = 0,
-        Parent = self.Track
-    })
-    
-    Utility:CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 3),
-        Parent = self.Fill
-    })
-    
-    -- Input handling
-    local dragging = false
-    
-    Utility:Connect(self.Track.InputBegan, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            self:UpdateFromInput(input.Position.X)
-        end
-    end)
-    
-    Utility:Connect(UserInputService.InputChanged, function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            self:UpdateFromInput(input.Position.X)
-        end
-    end)
-    
-    Utility:Connect(UserInputService.InputEnded, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-end
-
-function Slider:UpdateFromInput(inputX)
-    local trackX = self.Track.AbsolutePosition.X
-    local trackWidth = self.Track.AbsoluteSize.X
-    local relativeX = math.clamp(inputX - trackX, 0, trackWidth)
-    local percentage = relativeX / trackWidth
-    
-    local newValue = self.Min + (self.Max - self.Min) * percentage
-    newValue = Utility:Round(newValue, self.Decimals)
-    
-    self:SetValue(newValue)
-end
-
-function Slider:SetValue(value)
-    self.Value = math.clamp(value, self.Min, self.Max)
-    
-    if self.Flag then
-        ConfigManager:SetFlag(self.Flag, self.Value)
-    end
-    
-    -- Update visual
-    local percentage = (self.Value - self.Min) / (self.Max - self.Min)
-    self.Fill.Size = UDim2.new(percentage, 0, 1, 0)
-    self.ValueLabel.Text = tostring(self.Value) .. self.Units
-    
-    -- Invoke callback
-    self:InvokeCallback("Callback", self.Value)
-end
-
-function Slider:UpdateTheme()
-    if not self.Container then return end
-    
-    self.Container.BackgroundColor3 = Library.Theme.Tertiary
-    self.Label.TextColor3 = Library.Theme.TextPrimary
-    self.ValueLabel.TextColor3 = Library.Theme.TextSecondary
-    self.Track.BackgroundColor3 = Library.Theme.Primary
-    self.Fill.BackgroundColor3 = Library.Theme.Accent
-    
-    Component.UpdateTheme(self)
-end
-
-function Slider:LoadConfigValue()
-    if self.Flag then
-        local value = ConfigManager:GetFlag(self.Flag, self.Default)
-        self:SetValue(value)
-    end
-end
-
--- Label Component
-local Label = setmetatable({}, {__index = Component})
-Label.__index = Label
-
-function Label:New(options, section)
-    local self = setmetatable(Component:New("Label"), Label)
-    
-    self.Name = options.Name or ""
-    self.Text = options.Text or options.Name or "Label"
-    self.Section = section
-    
-    self:CreateGUI()
-    
-    return self
-end
-
-function Label:CreateGUI()
-    -- Main Container
-    self.Container = Utility:CreateInstance("Frame", {
-        Name = self.Name,
-        Size = UDim2.new(1, -20, 0, 30),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Parent = self.Section.ElementContainer
-    })
-    
-    -- Label
-    self.Label = Utility:CreateInstance("TextLabel", {
-        Name = "Label",
-        Size = UDim2.new(1, -20, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = self.Text,
-        TextColor3 = Library.Theme.TextSecondary,
-        TextSize = Library.Theme.FontSize,
-        Font = Library.Theme.Font,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextWrapped = true,
-        Parent = self.Container
-    })
-end
-
-function Label:UpdateTheme()
-    if not self.Container then return end
-    
-    self.Label.TextColor3 = Library.Theme.TextSecondary
-    
-    Component.UpdateTheme(self)
 end
 
 -- Notification System
